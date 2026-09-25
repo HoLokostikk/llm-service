@@ -4,10 +4,11 @@ import json
 from app.llm import generate, list_models, generate_stream, LLMBackendError
 from app.schemas import ChatRequest, ChatResponse, ModelsResponse
 from app.logging_config import setup_logging
-
+from app.config import settings
+#test
 app = FastAPI(title="LLM Service", version="0.1.0")
 
-
+setup_logging(settings.log_level)
 @app.get("/health")
 def health():
     return {"status": "ok"}

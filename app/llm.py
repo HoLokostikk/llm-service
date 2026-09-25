@@ -2,9 +2,8 @@ import time
 import httpx
 import json
 import logging
+from app.config import settings
 
-OLLAMA_URL = "http://localhost:11434"
-MODEL = "qwen2.5:0.5b-instruct-q8_0"
 
 
 async def generate(message : str, temperature : float, max_tokens : int) -> dict:
@@ -13,9 +12,9 @@ async def generate(message : str, temperature : float, max_tokens : int) -> dict
 
     async with httpx.AsyncClient(timeout = 120.0) as client:
         response = await client.post(
-            f"{OLLAMA_URL}/api/generate",
+            f"{settings.ollama_url}/api/generate",
             json = {
-                "model" : MODEL,
+                "model" : settings.model,
                 "prompt" : message,
                 "stream" : False,
                 "options" : {
@@ -30,7 +29,7 @@ async def generate(message : str, temperature : float, max_tokens : int) -> dict
 
     return {
         "reply" : data["response"].strip(),
-        "model" : MODEL,
+        "model" : settings.model,
         "prompt_tokens" : data.get("prompt_eval_count", 0),
         "completion_tokens" : data.get("eval_count", 0),
         "latency_ms" : 1000 * (time.perf_counter() - start),
@@ -38,7 +37,7 @@ async def generate(message : str, temperature : float, max_tokens : int) -> dict
 
 async def list_models() -> list[dict]:
     async with httpx.AsyncClient(timeout=10.0) as client:
-        response = await client.get(f"{OLLAMA_URL}/api/tags")
+        response = await client.get(f"{settings.ollama_url}/api/tags")
         response.raise_for_status()
         data = response.json()
 
@@ -49,13 +48,12 @@ async def list_models() -> list[dict]:
 
 
 async def generate_stream(message: str, temperature: float, max_tokens: int):
-    """Генератор: віддає токени по одному в міру надходження від Ollama."""
     async with httpx.AsyncClient(timeout=120.0) as client:
         async with client.stream(
             "POST",
-            f"{OLLAMA_URL}/api/generate",
+            f"{settings.ollama_url}/api/generate",
             json={
-                "model": MODEL,
+                "model": settings.model,
                 "prompt": message,
                 "stream": True,
                 "options": {
@@ -93,9 +91,9 @@ class LLMBackendError(Exception):
         try:
             async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(
-                    f"{OLLAMA_URL}/api/generate",
+                    f"{settings.ollama_url}/api/generate",
                     json={
-                        "model": MODEL,
+                        "model": settings.model,
                         "prompt": message,
                         "stream": False,
                         "options": {
@@ -120,7 +118,7 @@ class LLMBackendError(Exception):
             raise LLMBackendError("Model backend returned an error") from exc
 
         except httpx.RequestError as exc:
-            logger.error("Cannot reach Ollama at %s: %s", OLLAMA_URL, exc)
+            logger.error("Cannot reach Ollama at %s: %s", settings.ollama_url, exc)
             raise LLMBackendError("Model backend is unavailable") from exc
 
         latency_ms = 1000 * (time.perf_counter() - start)
@@ -132,7 +130,7 @@ class LLMBackendError(Exception):
 
         return {
             "reply": data["response"].strip(),
-            "model": MODEL,
+            "model": settings.model,
             "prompt_tokens": data.get("prompt_eval_count", 0),
             "completion_tokens": data.get("eval_count", 0),
             "latency_ms": latency_ms,
