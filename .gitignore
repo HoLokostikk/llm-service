@@ -2,3 +2,4 @@
 .idea/
 EXPERIMENTS.md
 app/__pychache__/
+docker-compose.override.yml
