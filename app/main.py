@@ -73,7 +73,7 @@ async def chat(request: ChatRequest):
             temperature=request.temperature,
             max_tokens=request.max_tokens,
         )
-    except Exception as exc:
+    except LLMBackendError as exc:
         raise HTTPException(status_code=502, detail=f"LLM backend error: {exc}")
 
     return ChatResponse(**result)
@@ -83,7 +83,7 @@ async def chat(request: ChatRequest):
 async def models():
     try:
         result = await list_models()
-    except Exception as exc:
+    except LLMBackendError as exc:
         raise HTTPException(status_code=502, detail=f"LLM backend error: {exc}")
 
     return ModelsResponse(models=result)
@@ -99,7 +99,7 @@ async def chat_stream(request: ChatRequest):
                 max_tokens=request.max_tokens,
             ):
                 yield f"data: {json.dumps(chunk, ensure_ascii=False)}\n\n"
-        except Exception:
+        except LLMBackendError:
             yield 'data: {"type": "error", "message": "LLM backend unavailable"}\n\n'
 
         yield "data: [DONE]\n\n"

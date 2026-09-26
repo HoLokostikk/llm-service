@@ -11,8 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class LLMBackendError(Exception):
-    ""
-
+    """Raised when the LLM backend fails to respond or returns an error."""
 
 async def generate(message: str, temperature: float, max_tokens: int) -> dict:
     start = time.perf_counter()
