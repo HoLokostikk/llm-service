@@ -69,8 +69,9 @@ async def generate(message: str, temperature: float, max_tokens: int) -> dict:
 
 async def generate_stream(message: str, temperature: float, max_tokens: int):
     try:
-        async with httpx.AsyncClient(timeout=settings.request_timeout) as client:
-            async with client.stream(
+        async with (
+            httpx.AsyncClient(timeout=settings.request_timeout) as client,
+            client.stream(
                 "POST",
                 f"{settings.ollama_url}/api/generate",
                 json={
@@ -82,7 +83,8 @@ async def generate_stream(message: str, temperature: float, max_tokens: int):
                         "num_predict": max_tokens,
                     },
                 },
-            ) as response:
+            ) as response,
+        ):
                 response.raise_for_status()
 
                 async for line in response.aiter_lines():
